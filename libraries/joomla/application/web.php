@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * Base class for a Joomla! Web application.
  *
- * @package     Joomla.Platform
- * @subpackage  Application
- * @since       11.4
+ * @since  11.4
  */
 class JApplicationWeb extends JApplicationBase
 {
@@ -77,6 +75,25 @@ class JApplicationWeb extends JApplicationBase
 	 * @since  11.3
 	 */
 	protected static $instance;
+
+	/**
+	 * A map of integer HTTP 1.1 response codes to the full HTTP Status for the headers.
+	 *
+	 * @var    object
+	 * @since  3.4
+	 * @see    http://tools.ietf.org/pdf/rfc7231.pdf
+	 */
+	private $responseMap = array(
+		300 => 'HTTP/1.1 300 Multiple Choices',
+		301 => 'HTTP/1.1 301 Moved Permanently',
+		302 => 'HTTP/1.1 302 Found',
+		303 => 'HTTP/1.1 303 See other',
+		304 => 'Not Modified',
+		305 => 'HTTP/1.1 305 Use Proxy',
+		306 => 'HTTP/1.1 306 (Unused)',
+		307 => 'HTTP/1.1 307 Temporary Redirect',
+		308 => 'Permanent Redirect'
+	);
 
 	/**
 	 * Class constructor.
@@ -456,14 +473,14 @@ class JApplicationWeb extends JApplicationBase
 	 * or "303 See Other" code in the header pointing to the new location. If the headers have already been
 	 * sent this will be accomplished using a JavaScript statement.
 	 *
-	 * @param   string   $url    The URL to redirect to. Can only be http/https URL
-	 * @param   boolean  $moved  True if the page is 301 Permanently Moved, otherwise 303 See Other is assumed.
+	 * @param   string   $url     The URL to redirect to. Can only be http/https URL.
+	 * @param   integer  $status  The HTTP 1.1 status code to be provided. 303 is assumed by default.
 	 *
 	 * @return  void
 	 *
 	 * @since   11.3
 	 */
-	public function redirect($url, $moved = false)
+	public function redirect($url, $status = 303)
 	{
 		// Import library dependencies.
 		jimport('phputf8.utils.ascii');
@@ -526,8 +543,20 @@ class JApplicationWeb extends JApplicationBase
 			}
 			else
 			{
+				// Check if we have a boolean for the status variable for compatability with old $move parameter
+				// @deprecated 4.0
+				if (is_bool($status))
+				{
+					$status = $status ? 301 : 303;
+				}
+
+				if (!is_int($status) && !isset($this->responseMap[$status]))
+				{
+					throw new \InvalidArgumentException('You have not supplied a valid HTTP 1.1 status code');
+				}
+
 				// All other cases use the more efficient HTTP header for redirection.
-				$this->header($moved ? 'HTTP/1.1 301 Moved Permanently' : 'HTTP/1.1 303 See other');
+				$this->header($this->responseMap[$status]);
 				$this->header('Location: ' . $url);
 				$this->header('Content-Type: text/html; charset=' . $this->charSet);
 			}
@@ -1125,6 +1154,7 @@ class JApplicationWeb extends JApplicationBase
 		if ($siteUri != '')
 		{
 			$uri = JUri::getInstance($siteUri);
+			$path = $uri->toString(array('path'));
 		}
 		// No explicit base URI was set so we need to detect it.
 		else
@@ -1136,30 +1166,25 @@ class JApplicationWeb extends JApplicationBase
 			if (strpos(php_sapi_name(), 'cgi') !== false && !ini_get('cgi.fix_pathinfo') && !empty($_SERVER['REQUEST_URI']))
 			{
 				// We aren't expecting PATH_INFO within PHP_SELF so this should work.
-				$uri->setPath(rtrim(dirname($_SERVER['PHP_SELF']), '/\\'));
+				$path = dirname($_SERVER['PHP_SELF']);
 			}
 			// Pretty much everything else should be handled with SCRIPT_NAME.
 			else
 			{
-				$uri->setPath(rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\'));
+				$path = dirname($_SERVER['SCRIPT_NAME']);
 			}
-
-			// Clear the unused parts of the requested URI.
-			$uri->setQuery(null);
-			$uri->setFragment(null);
 		}
 
-		// Get the host and path from the URI.
 		$host = $uri->toString(array('scheme', 'user', 'pass', 'host', 'port'));
-		$path = rtrim($uri->toString(array('path')), '/\\');
 
 		// Check if the path includes "index.php".
 		if (strpos($path, 'index.php') !== false)
 		{
 			// Remove the index.php portion of the path.
 			$path = substr_replace($path, '', strpos($path, 'index.php'), 9);
-			$path = rtrim($path, '/\\');
 		}
+
+		$path = rtrim($path, '/\\');
 
 		// Set the base URI both as just a path and as the full URI.
 		$this->set('uri.base.full', $host . $path . '/');
@@ -1167,7 +1192,10 @@ class JApplicationWeb extends JApplicationBase
 		$this->set('uri.base.path', $path . '/');
 
 		// Set the extended (non-base) part of the request URI as the route.
-		$this->set('uri.route', substr_replace($this->get('uri.request'), '', 0, strlen($this->get('uri.base.full'))));
+		if (stripos($this->get('uri.request'), $this->get('uri.base.full')) === 0)
+		{
+			$this->set('uri.route', substr_replace($this->get('uri.request'), '', 0, strlen($this->get('uri.base.full'))));
+		}
 
 		// Get an explicitly set media URI is present.
 		$mediaURI = trim($this->get('media_uri'));

@@ -7,14 +7,12 @@
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-defined('_JEXEC') or die;
+defined('JPATH_PLATFORM') or die;
 
 /**
  * Class to manage the site application pathway.
  *
- * @package     Joomla.Libraries
- * @subpackage  Pathway
- * @since       1.5
+ * @since  1.5
  */
 class JPathwaySite extends JPathway
 {

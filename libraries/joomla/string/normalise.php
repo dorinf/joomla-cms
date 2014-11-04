@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * Joomla Platform String Normalise Class
  *
- * @package     Joomla.Platform
- * @subpackage  String
- * @since       11.3
+ * @since  11.3
  */
 abstract class JStringNormalise
 {
@@ -36,7 +34,7 @@ abstract class JStringNormalise
 	 * @param   string   $input    The string input (ASCII only).
 	 * @param   boolean  $grouped  Optionally allows splitting on groups of uppercase characters.
 	 *
-	 * @return  string  The space separated string.
+	 * @return  mixed  The space separated string or an array of substrings if grouped is true.
 	 *
 	 * @since   12.1
 	 */

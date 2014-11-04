@@ -12,14 +12,24 @@ defined('_JEXEC') or die;
 /**
  * Template model class.
  *
- * @package     Joomla.Administrator
- * @subpackage  com_templates
- * @since       1.6
+ * @since  1.6
  */
 class TemplatesModelTemplate extends JModelForm
 {
+	/**
+	 * The information in a template
+	 *
+	 * @var    stdClass
+	 * @since  1.6
+	 */
 	protected $template = null;
 
+	/**
+	 * The path to the template
+	 *
+	 * @var    stdClass
+	 * @since  3.2
+	 */
 	protected $element = null;
 
 	/**
@@ -1157,41 +1167,11 @@ class TemplatesModelTemplate extends JModelForm
 	}
 
 	/**
-	 * Check the admin template.
-	 *
-	 * @return  object  object containing the id of the template.
-	 *
-	 * @since   3.2
-	 */
-	public function getHathor()
-	{
-		$app = JFactory::getApplication();
-		$db = $this->getDbo();
-		$query = $db->getQuery(true);
-
-		$query->select('home');
-		$query->from('#__template_styles');
-		$query->where($db->quoteName('template') . ' = ' . $db->quote('hathor'));
-		$db->setQuery($query);
-
-		try
-		{
-			$result = $db->loadObject();
-		}
-		catch (RuntimeException $e)
-		{
-			$app->enqueueMessage($e->getMessage(), 'error');
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Copy a file.
 	 *
-	 * @param   string  $newName    The name of the copied file
-	 * @param   string  $location   The final location where the file is to be copied
-	 * @param   string  $file    	The name and location of the file
+	 * @param   string  $newName   The name of the copied file
+	 * @param   string  $location  The final location where the file is to be copied
+	 * @param   string  $file      The name and location of the file
 	 *
 	 * @return   boolean  true if image resize successful, false otherwise.
 	 *

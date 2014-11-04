@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * User class.  Handles all application interaction with a user
  *
- * @package     Joomla.Platform
- * @subpackage  User
- * @since       11.1
+ * @since  11.1
  */
 class JUser extends JObject
 {
@@ -155,6 +153,14 @@ class JUser extends JObject
 	public $resetCount = null;
 
 	/**
+	 * Flag to require the user's password be reset
+	 *
+	 * @var    int
+	 * @since  3.2
+	 */
+	public $requireReset = null;
+
+	/**
 	 * User parameters
 	 *
 	 * @var    JRegistry
@@ -244,9 +250,8 @@ class JUser extends JObject
 		{
 			if (!$id = JUserHelper::getUserId($identifier))
 			{
-				JLog::add(JText::sprintf('JLIB_USER_ERROR_ID_NOT_EXISTS', $identifier), JLog::WARNING, 'jerror');
-
-				return false;
+				// If the $identifier doesn't match with any id, just return an empty JUser.
+				return new JUser;
 			}
 		}
 		else
@@ -562,6 +567,7 @@ class JUser extends JObject
 
 				return false;
 			}
+
 			$this->password_clear = JArrayHelper::getValue($array, 'password', '', 'string');
 
 			$array['password'] = JUserHelper::hashPassword($array['password']);
@@ -592,7 +598,18 @@ class JUser extends JObject
 
 				$this->password_clear = JArrayHelper::getValue($array, 'password', '', 'string');
 
+				// Check if the user is reusing the current password if required to reset their password
+				if ($this->requireReset == 1 && JUserHelper::verifyPassword($this->password_clear, $this->password))
+				{
+					$this->setError(JText::_('JLIB_USER_ERROR_CANNOT_REUSE_PASSWORD'));
+
+					return false;
+				}
+
 				$array['password'] = JUserHelper::hashPassword($array['password']);
+
+				// Reset the change password flag
+				$array['requireReset'] = 0;
 			}
 			else
 			{
@@ -750,6 +767,12 @@ class JUser extends JObject
 			$this->setError($e->getMessage());
 
 			return false;
+		}
+
+		// Reset the user object in the session on a successful save
+		if ($result === true && JFactory::getUser()->id == $this->id)
+		{
+			JFactory::getSession()->set('user', $this);
 		}
 
 		return $result;

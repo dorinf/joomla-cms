@@ -46,13 +46,13 @@ $assoc = JLanguageAssociations::isEnabled();
 <div class="clearfix"> </div>
 <hr class="hr-condensed" />
 
-<form action="<?php echo JRoute::_('index.php?option=com_newsfeeds&layout=modal&tmpl=component&id='.(int) $this->item->id); ?>" method="post" name="adminForm" id="newsfeed-form" class="form-validate form-horizontal">
+<form action="<?php echo JRoute::_('index.php?option=com_newsfeeds&layout=modal&tmpl=component&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="newsfeed-form" class="form-validate form-horizontal">
 	<?php echo JLayoutHelper::render('joomla.edit.title_alias', $this); ?>
 
 	<div class="form-horizontal">
 		<?php echo JHtml::_('bootstrap.startTabSet', 'myTab', array('active' => 'details')); ?>
 
-		<?php echo JHtml::_('bootstrap.addTab', 'myTab', 'details', empty($this->item->id) ? JText::_('COM_NEWSFEEDS_NEW_NEWSFEED', true) : JText::sprintf('COM_NEWSFEEDS_EDIT_NEWSFEED', $this->item->id, true)); ?>
+		<?php echo JHtml::_('bootstrap.addTab', 'myTab', 'details', empty($this->item->id) ? JText::_('COM_NEWSFEEDS_NEW_NEWSFEED', true) : JText::_('COM_NEWSFEEDS_EDIT_NEWSFEED', true)); ?>
 		<div class="row-fluid">
 			<div class="span9">
 				<div class="form-vertical">

@@ -15,11 +15,9 @@ JFormHelper::loadFieldClass('text');
  * Form Field class for the Joomla Platform.
  * Supports a URL text field
  *
- * @package     Joomla.Platform
- * @subpackage  Form
- * @link        http://www.w3.org/TR/html-markup/input.url.html#input.url
- * @see         JFormRuleUrl for validation of full urls
- * @since       11.1
+ * @link   http://www.w3.org/TR/html-markup/input.url.html#input.url
+ * @see    JFormRuleUrl for validation of full urls
+ * @since  11.1
  */
 class JFormFieldUrl extends JFormFieldText
 {
@@ -63,11 +61,8 @@ class JFormFieldUrl extends JFormFieldText
 		JHtml::_('jquery.framework');
 		JHtml::_('script', 'system/html5fallback.js', false, true);
 
-		// Uris should never include <>" see see http://www.ietf.org/rfc/rfc1738.txt.
-		$this->value = str_replace(array('<', '>', '"'), '', $this->value);
-
 		return '<input type="url" name="' . $this->name . '"' . $class . ' id="' . $this->id . '" value="'
-			. JStringPunycode::urlToUTF8($this->value, ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly
+			. htmlspecialchars(JStringPunycode::urlToUTF8($this->value), ENT_COMPAT, 'UTF-8') . '"' . $size . $disabled . $readonly
 			. $hint . $autocomplete . $autofocus . $spellcheck . $onchange . $maxLength . $required . ' />';
 	}
 }

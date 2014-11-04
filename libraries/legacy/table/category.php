@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * Category table
  *
- * @package     Joomla.Legacy
- * @subpackage  Table
- * @since       11.1
+ * @since  11.1
  */
 class JTableCategory extends JTableNested
 {
@@ -28,6 +26,9 @@ class JTableCategory extends JTableNested
 	public function __construct(JDatabaseDriver $db)
 	{
 		parent::__construct('#__categories', 'id', $db);
+
+		JTableObserverTags::createObserver($this, array('typeAlias' => '{extension}.category'));
+		JTableObserverContenthistory::createObserver($this, array('typeAlias' => '{extension}.category'));
 
 		$this->access = (int) JFactory::getConfig()->get('access');
 	}

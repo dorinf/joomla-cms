@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * Module helper class
  *
- * @package     Joomla.Libraries
- * @subpackage  Module
- * @since       1.5
+ * @since  1.5
  */
 abstract class JModuleHelper
 {
@@ -493,7 +491,8 @@ abstract class JModuleHelper
 
 				if (is_array($cacheparams->modeparams))
 				{
-					$uri = JRequest::get();
+					$input   = JFactory::getApplication()->input;
+					$uri     = $input->getArray();
 					$safeuri = new stdClass;
 
 					foreach ($cacheparams->modeparams as $key => $value)

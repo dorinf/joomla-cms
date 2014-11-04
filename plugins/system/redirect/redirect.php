@@ -12,9 +12,7 @@ defined('JPATH_BASE') or die;
 /**
  * Plugin class for redirect handling.
  *
- * @package     Joomla.Plugin
- * @subpackage  System.redirect
- * @since       1.6
+ * @since  1.6
  */
 class PlgSystemRedirect extends JPlugin
 {
@@ -66,17 +64,54 @@ class PlgSystemRedirect extends JPlugin
 			// See if the current url exists in the database as a redirect.
 			$db = JFactory::getDbo();
 			$query = $db->getQuery(true)
-				->select($db->quoteName('new_url'))
+				->select($db->quoteName(array('new_url', 'header')))
 				->select($db->quoteName('published'))
 				->from($db->quoteName('#__redirect_links'))
 				->where($db->quoteName('old_url') . ' = ' . $db->quote($current));
 			$db->setQuery($query, 0, 1);
 			$link = $db->loadObject();
 
+			// If no published redirect was found try with the server-relative URL
+			if (!$link or ($link->published != 1))
+			{
+				$currRel = rawurldecode($uri->toString(array('path', 'query', 'fragment')));
+				$query = $db->getQuery(true)
+					->select($db->quoteName('new_url'))
+					->select($db->quoteName('published'))
+					->from($db->quoteName('#__redirect_links'))
+					->where($db->quoteName('old_url') . ' = ' . $db->quote($currRel));
+				$db->setQuery($query, 0, 1);
+				$link = $db->loadObject();
+			}
+
 			// If a redirect exists and is published, permanently redirect.
 			if ($link and ($link->published == 1))
 			{
-				$app->redirect($link->new_url, true);
+				// If no header is set use a 301 permanent redirect
+				if (!$link->header || JComponentHelper::getParams('com_redirect')->get('mode', 0) == false)
+				{
+					$link->header = 301;
+				}
+
+				// If we have a redirect in the 300 range use JApplicationWeb::redirect().
+				if ($link->header < 400 && $link->header >= 300)
+				{
+					$app->redirect($link->new_url, intval($link->header));
+				}
+				else
+				{
+					// Else rethrow the exeception with the new header and return
+					try
+					{
+						throw new RuntimeException($error->getMessage(), $link->header, $error);
+					}
+					catch (Exception $e)
+					{
+						$newError = $e;
+					}
+
+					JError::customErrorPage($newError);
+				}
 			}
 			else
 			{
@@ -88,9 +123,9 @@ class PlgSystemRedirect extends JPlugin
 					->where($db->quoteName('old_url') . ' = ' . $db->quote($current));
 				$db->setQuery($query);
 				$res = $db->loadResult();
+
 				if (!$res)
 				{
-
 					// If not, add the new url to the database.
 					$columns = array(
 						$db->quoteName('old_url'),
@@ -118,7 +153,7 @@ class PlgSystemRedirect extends JPlugin
 					// Existing error url, increase hit counter.
 					$query->clear()
 						->update($db->quoteName('#__redirect_links'))
-						->set($db->quoteName('hits') . ' = ' . $db->quote('hits') . ' + 1')
+						->set($db->quoteName('hits') . ' = ' . $db->quoteName('hits') . ' + 1')
 						->where('id = ' . (int) $res);
 					$db->setQuery($query);
 					$db->execute();

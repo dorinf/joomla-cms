@@ -12,9 +12,7 @@ defined('JPATH_PLATFORM') or die;
 /**
  * HTTP transport class for using PHP streams.
  *
- * @package     Joomla.Platform
- * @subpackage  HTTP
- * @since       11.3
+ * @since  11.3
  */
 class JHttpTransportStream implements JHttpTransport
 {
@@ -125,7 +123,16 @@ class JHttpTransportStream implements JHttpTransport
 		$options['follow_location'] = (int) $this->options->get('follow_location', 1);
 
 		// Create the stream context for the request.
-		$context = stream_context_create(array('http' => $options));
+		$context = stream_context_create(
+			array(
+				'http' => $options,
+				'ssl' => array(
+					'verify_peer'   => true,
+					'cafile'        => __DIR__ . '/cacert.pem',
+					'verify_depth'  => 5,
+				)
+			)
+		);
 
 		// Capture PHP errors
 		$php_errormsg = '';
@@ -175,7 +182,6 @@ class JHttpTransportStream implements JHttpTransport
 		}
 
 		return $this->getResponse($headers, $content);
-
 	}
 
 	/**
